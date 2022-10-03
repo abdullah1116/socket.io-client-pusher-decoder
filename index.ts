@@ -1,6 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 
-export function initIoPusher(socket: Socket, _io: typeof io) {
+export function initIoPusher(socket: typeof Socket, _io: typeof io) {
   class IoPusher {
     public socket: Socket;
     public subscribers: Record<string, IoPusherSubscriber> = {};
