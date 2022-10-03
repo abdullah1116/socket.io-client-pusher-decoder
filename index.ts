@@ -1,9 +1,9 @@
 import { io, Socket } from 'socket.io-client';
 
-export function initIoPusher(socket: typeof Socket, _io: typeof io) {
-  class IoPusher {
+export function initPusher(socket: typeof Socket, _io: typeof io) {
+  class Pusher {
     public socket: Socket;
-    public subscribers: Record<string, IoPusherSubscriber> = {};
+    public subscribers: Record<string, PusherSubscriber> = {};
 
     constructor(
       url: string,
@@ -22,7 +22,7 @@ export function initIoPusher(socket: typeof Socket, _io: typeof io) {
         return this.subscribers[channelName];
       }
 
-      return (this.subscribers[channelName] = new IoPusherSubscriber(
+      return (this.subscribers[channelName] = new PusherSubscriber(
         this,
         channelName
       ));
@@ -49,10 +49,10 @@ export function initIoPusher(socket: typeof Socket, _io: typeof io) {
     }
   }
 
-  class IoPusherSubscriber {
-    public eventListeners: Record<string, IoPusherBinder[]> = {};
+  class PusherSubscriber {
+    public eventListeners: Record<string, PusherBinder[]> = {};
 
-    constructor(private pusher: IoPusher, private subscriberName: string) {
+    constructor(private pusher: Pusher, private subscriberName: string) {
       pusher.socket.on(subscriberName, (eventName, data) =>
         this.onEvent(eventName, data)
       );
@@ -74,7 +74,7 @@ export function initIoPusher(socket: typeof Socket, _io: typeof io) {
       }
 
       this.eventListeners[eventName].push(
-        new IoPusherBinder(this, eventName, callback)
+        new PusherBinder(this, eventName, callback)
       );
     }
 
@@ -107,9 +107,9 @@ export function initIoPusher(socket: typeof Socket, _io: typeof io) {
     }
   }
 
-  class IoPusherBinder {
+  class PusherBinder {
     constructor(
-      private pusherChannel: IoPusherSubscriber,
+      private pusherChannel: PusherSubscriber,
       private eventName: string,
       private callback
     ) {}
@@ -127,5 +127,5 @@ export function initIoPusher(socket: typeof Socket, _io: typeof io) {
     }
   }
 
-  return IoPusher;
+  return Pusher;
 }
