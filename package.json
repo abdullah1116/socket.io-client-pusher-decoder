@@ -1,0 +1,22 @@
+{
+  "name": "socket.io-client-pusher-decoder",
+  "version": "0.1.0",
+  "description": "pusher decoder for socket.io",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abdullah1116/socket.io-client-pusher-decoder.git"
+  },
+  "author": "abdullah1116",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/abdullah1116/socket.io-client-pusher-decoder/issues"
+  },
+  "homepage": "https://github.com/abdullah1116/socket.io-client-pusher-decoder#readme",
+  "devDependencies": {
+    "socket.io-client": "^4.5.2"
+  }
+}
