@@ -1,6 +1,6 @@
 {
-  "name": "@abdullah1116/socket.io-client-pusher-decoder",
-  "version": "0.2.1",
+  "name": "socket.io-client-pusher-decoder",
+  "version": "0.2.2",
   "description": "pusher decoder for socket.io",
   "main": "index.js",
   "scripts": {
