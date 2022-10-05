@@ -8,22 +8,22 @@ export function initPusher(_io) {
 }
 
 class Connection {
-  private io: ISocket;
+  private socket: ISocket;
 
   constructor(uri: string, opts?: any) {
     if (typeof io === undefined) {
       throw 'not initialized';
     }
 
-    this.io = io(uri, opts);
+    this.socket = io(uri, opts);
   }
 
-  public bind(ev: string, listener: typeof IListener) {
-    return this.io.on(ev, listener);
+  public bind(eventName: string, listener: typeof IListener) {
+    return this.socket.on(eventName, listener);
   }
 
-  public unbind(ev: string, listener: typeof IListener) {
-    return this.io.off(ev, listener);
+  public unbind(eventName: string, listener: typeof IListener) {
+    return this.socket.off(eventName, listener);
   }
 }
 
@@ -37,36 +37,53 @@ class Pusher {
     });
   }
 
-  public subscribe(ev) {
-    if (this.subscribers[ev]) {
-      return this.subscribers[ev];
+  /**
+   * Subscribe specified channels.
+   * @param eventName Event name
+   */
+  public subscribe(eventName: string) {
+    if (this.subscribers[eventName]) {
+      return this.subscribers[eventName];
     }
 
-    return (this.subscribers[ev] = new Channel(this, ev));
+    return (this.subscribers[eventName] = new Channel(this, eventName));
   }
 
-  public unsubscribe(ev) {
-    if (this.subscribers[ev]) {
-      this.subscribers[ev].unSubscribe();
+  /**
+   * Un-Subscribe specified channels.
+   * @param eventName Event name
+   */
+  public unsubscribe(eventName: string) {
+    if (this.subscribers[eventName]) {
+      this.subscribers[eventName].unSubscribe();
     }
 
     return this;
   }
 
+  /**
+   * Un-Subscribe all channels.
+   * !!WARNING!!! This will remove all subscribers
+   */
   public unsubscribe_all() {
-    Object.keys(this.subscribers).forEach((ev) => {
-      if (this.subscribers[ev]) {
-        this.subscribers[ev].unbind_all();
+    Object.keys(this.subscribers).forEach((eventName) => {
+      if (this.subscribers[eventName]) {
+        this.subscribers[eventName].unbind_all();
 
-        delete this.subscribers[ev];
+        delete this.subscribers[eventName];
       }
     });
 
     return this;
   }
 
-  public bind(ev: string, listner: typeof IListener) {
-    this.connection.bind(ev, listner);
+  /**
+   * Bind to all events of all channels.
+   * @param eventName Event name
+   * @param listener Listener
+   */
+  public bind(eventName: string, listener: typeof IListener) {
+    this.connection.bind(eventName, listener);
   }
 }
 
@@ -79,26 +96,37 @@ class Channel {
     );
   }
 
-  public onEvent(ev: string, data: any) {
-    if (ev) {
-      if (this.eventListeners[ev]) {
-        this.eventListeners[ev].forEach((listeners) => {
+  private onEvent(eventName: string, data: any) {
+    if (eventName) {
+      if (this.eventListeners[eventName]) {
+        this.eventListeners[eventName].forEach((listeners) => {
           listeners.emit(data);
         });
       }
     }
   }
 
-  public bind(ev, listner) {
-    if (!this.eventListeners[ev]) {
-      this.eventListeners[ev] = [];
+  /**
+   * Bind to specified event of this channel.
+   * @param eventName Event name
+   * @param listener Listener
+   */
+  public bind(eventName: string, listener: typeof ISpecifiedListener) {
+    if (!this.eventListeners[eventName]) {
+      this.eventListeners[eventName] = [];
     }
 
-    this.eventListeners[ev].push(new PusherBinder(this, ev, listner));
+    this.eventListeners[eventName].push(
+      new PusherBinder(this, eventName, listener)
+    );
   }
 
-  public unbind(ev: string) {
-    const eventListeners = this.eventListeners[ev];
+  /**
+   * Un-bind all specified events of this channel.
+   * @param eventName Event name
+   */
+  public unbind(eventName: string) {
+    const eventListeners = this.eventListeners[eventName];
 
     if (Array.isArray(eventListeners) && eventListeners.length > 0) {
       eventListeners.forEach((listeners, i) => {
@@ -112,12 +140,20 @@ class Channel {
     return this;
   }
 
+  /**
+   * Un-bind all events of this channel.
+   */
   public unbind_all() {
-    Object.keys(this.eventListeners).forEach((ev) => this.unbind(ev));
+    Object.keys(this.eventListeners).forEach((eventName) =>
+      this.unbind(eventName)
+    );
 
     return this;
   }
 
+  /**
+   * Un-subscribe this channel.
+   */
   public unSubscribe() {
     this.pusher.connection.unbind(this.subscriberName, this.onEvent);
     delete this.pusher.subscribe[this.subscriberName];
@@ -127,16 +163,16 @@ class Channel {
 class PusherBinder {
   constructor(
     private pusherChannel: Channel,
-    private ev: string,
-    private listner
+    private eventName: string,
+    private listener: typeof ISpecifiedListener
   ) {}
 
   public emit(data) {
-    this.listner(data);
+    this.listener(data);
   }
 
   public unbind() {
-    const eventListeners = this.pusherChannel.eventListeners[this.ev];
+    const eventListeners = this.pusherChannel.eventListeners[this.eventName];
     if (Array.isArray(eventListeners) && eventListeners.length > 0) {
       const index = eventListeners.findIndex((v) => v === this);
       eventListeners.splice(index, 1);
@@ -144,6 +180,7 @@ class PusherBinder {
   }
 }
 
-declare function IListener(...args: any[]): void;
+declare function IListener(eventName: string, data: any): void;
+declare function ISpecifiedListener(data: any): void;
 export interface IPusher extends Pusher {}
 export interface IChannel extends Channel {}
