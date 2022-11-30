@@ -1,20 +1,9 @@
 import { io as Iio, Socket as ISocket } from 'socket.io-client';
 
-let io: typeof Iio;
-
-export function initPusher(_io) {
-  io = _io;
-  return Pusher;
-}
-
 class Connection {
   private socket: ISocket;
 
-  constructor(uri: string, opts?: any) {
-    if (typeof io === undefined) {
-      throw 'not initialized';
-    }
-
+  constructor(io: typeof Iio, uri: string, opts?: any) {
     this.socket = io(uri, opts);
   }
 
@@ -27,12 +16,16 @@ class Connection {
   }
 }
 
-class Pusher {
-  public connection: Connection;
-  public subscribers: Record<string, Channel> = {};
+export class Pusher {
+  public io: Connection;
+  private subscribers: Record<string, Channel> = {};
 
-  constructor(url: string, opts?: any) {
-    this.connection = new Connection(url, {
+  constructor(io: typeof Iio, url: string, opts?: any) {
+    if (typeof io === undefined) {
+      throw 'not initialized';
+    }
+
+    this.io = new Connection(io, url, {
       auth: (cb) => cb(opts),
     });
   }
@@ -83,7 +76,7 @@ class Pusher {
    * @param listener Listener
    */
   public bind(eventName: string, listener: typeof IListener) {
-    this.connection.bind(eventName, listener);
+    this.io.bind(eventName, listener);
   }
 }
 
@@ -91,7 +84,7 @@ class Channel {
   public eventListeners: Record<string, PusherBinder[]> = {};
 
   constructor(private pusher: Pusher, private subscriberName: string) {
-    pusher.connection.bind(subscriberName, (eventName, data) =>
+    pusher.io.bind(subscriberName, (eventName, data) =>
       this.onEvent(eventName, data)
     );
   }
@@ -155,7 +148,7 @@ class Channel {
    * Un-subscribe this channel.
    */
   public unSubscribe() {
-    this.pusher.connection.unbind(this.subscriberName, this.onEvent);
+    this.pusher.io.unbind(this.subscriberName, this.onEvent);
     delete this.pusher.subscribe[this.subscriberName];
   }
 }
