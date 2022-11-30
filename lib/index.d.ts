@@ -1,12 +1,12 @@
 import { io as Iio, Socket as ISocket } from 'socket.io-client';
 declare class Connection {
-    private socket;
+    io: ISocket;
     constructor(io: typeof Iio, uri: string, opts?: any);
     bind(eventName: string, listener: typeof IListener): ISocket<import("@socket.io/component-emitter").DefaultEventsMap, import("@socket.io/component-emitter").DefaultEventsMap>;
     unbind(eventName: string, listener: typeof IListener): ISocket<import("@socket.io/component-emitter").DefaultEventsMap, import("@socket.io/component-emitter").DefaultEventsMap>;
 }
 export declare class Pusher {
-    io: Connection;
+    connection: Connection;
     private subscribers;
     constructor(io: typeof Iio, url: string, opts?: any);
     /**
