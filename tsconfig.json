@@ -6,6 +6,7 @@
     "declaration": true,
     "outDir": "lib",
     "esModuleInterop": true,
+    "moduleResolution": "Node",
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   }
